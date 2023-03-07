@@ -13,7 +13,7 @@ const http = require("http");
 const fs = require("fs");
 const url = require("url");
 app.use(express.static(__dirname + '/public'));
-app.use('/uploads', express.static('uploads'));
+app.use('.', express.static('uploads'));
 const multer = require('multer');
 const { signupValidation, loginValidation } = require("./validation");
 app.use(cors());
@@ -26,6 +26,7 @@ app.use(
 app.get("/", function (req, res) {
   return res.send({ error: true, message: "hello" });
 });
+
 // connection configurations
 var dbConn = mysql.createConnection({
   host: "localhost",
@@ -200,10 +201,12 @@ app.post("/register", signupValidation, (req, res, next) => {
 });
 //JWT
 app.post("/login", loginValidation, (req, res, next) => {
+  console.log(req)
+  
   dbConn.query(
     `SELECT * FROM users1 WHERE email = ${dbConn.escape(req.body.email)};`,
     (err, result) => {
-      // console.log(req.body.email);
+      console.log(result);
       // user does not exists
       if (err) {
         throw err;
@@ -211,12 +214,13 @@ app.post("/login", loginValidation, (req, res, next) => {
           msg: err,
         });
       }
-      if (!result.length) {
-        return res.status(401).send({
-          msg: "Email or password is incorrect!",
-        });
-      }
+      // if (!result) {
+      //   return res.status(401).send({
+      //     msg: "Email or password is incorrect!",
+      //   });
+      // }
       // check password
+      console.log(req.body.password, result[0]["password"])
           if (req.body.password === result[0]["password"]) {
             const token = jwt.sign(
               { id: result[0].id },
@@ -235,17 +239,18 @@ app.post("/login", loginValidation, (req, res, next) => {
           }
           return res.status(401).send({
             msg: "Username or password is incorrect!",
-          });
+          });`
+          `
         }
       );
     }
   );
 app.post("/get-user", signupValidation, (req, res, next) => {
-  const token = req.headers.authorization
+  // const token = req.headers.authorization
 
-  if (!token) {
-    return res.status(403).send("A token is required for deletion");
-  }
+  // if (!token) {
+  //   return res.status(403).send("A token is required for deletion");
+  // }
   if (
     !req.headers.authorization ||
     !req.headers.authorization.startsWith("Bearer") ||
@@ -295,27 +300,27 @@ const user_id = req.params.id
   }
 });
 app.get("/get-users", signupValidation, (req, res, next) => {
-  const token = req.headers.authorization
+  // const token = req.headers.authorization
 
-  if (!token) {
-    return res.status(403).send("A token is required for retrie");
-  }
-  // console.log(req.body)
+  // if (!token) {
+  //   return res.status(403).send("A token is required for retrie");
+  // }
+  // // console.log(req.body)
 
-  if (
-    !req.headers.authorization ||
-    !req.headers.authorization.startsWith("Bearer") ||
-    !req.headers.authorization.split(" ")[1]
-  ) {
-    return res.status(422).json({
-      message: "Please provide the token",
-    });
-  }
-  const theToken = req.headers.authorization.split(" ")[1];
-  const decoded = jwt.verify(theToken, "the-super-strong-secrect");
-  console.log(decoded)
-  if(theToken){
-    console.log(theToken)
+  // if (
+  //   !req.headers.authorization ||
+  //   !req.headers.authorization.startsWith("Bearer") ||
+  //   !req.headers.authorization.split(" ")[1]
+  // ) {
+  //   return res.status(422).json({
+  //     message: "Please provide the token",
+  //   });
+  // }
+  // const theToken = req.headers.authorization.split(" ")[1];
+  // const decoded = jwt.verify(theToken, "the-super-strong-secrect");
+  // console.log(decoded)
+  // if(theToken){
+    // console.log(theToken)
     dbConn.query(
       "SELECT * FROM users1",
       function (error, results, fields) {
@@ -324,7 +329,7 @@ app.get("/get-users", signupValidation, (req, res, next) => {
         return res.send({ data: results, message: "Users Fetch Successfully." });
       }
     );
-  }
+  // }
 });
 app.get("/get-users/:id", signupValidation, (req, res, next) => {
   const token = req.headers.authorization
